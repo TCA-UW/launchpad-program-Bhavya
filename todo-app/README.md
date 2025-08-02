@@ -1,3 +1,13 @@
+Explaining the ER-Diagram:
+
+The key feature to notice here is that the todo list table contains each task. But each task's information is contained within another table which needs to be called upon or joined inorder to pull information for. This is so we can also keep track of completed tasks, and there previous values. 
+
+
+
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

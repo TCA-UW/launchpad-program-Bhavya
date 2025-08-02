@@ -1,79 +1,48 @@
-import React, { useState } from 'react';
-import AddTaskForm from './Components/AddTaskForm';
-import TaskList from './Components/TaskList';
-import TaskFilter from './Components/TaskFilter';
-import './App.css';
+import { useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// initialize Supabase client
+const supabase = createClient(
+  import.meta.env.REACT_APP_SUPABASE_URL,
+  import.meta.env.REACT_APP_SUPABASE_ANON_KEY
+);
 
 function App() {
-  const [tasks, setTasks] = useState([
-    { id: 1, text: "Learn React", completed: false },
-    { id: 2, text: "Build a todo app", completed: true },
-    { id: 3, text: "Practice JavaScript", completed: false }
-  ]);
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [filter, setFilter] = useState('all');
-
-  const addTask = (newTask) => {
-    setTasks([...tasks, newTask]);
-  };
-
-  const toggleTask = (taskId) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, completed: !task.completed }
-        : task
-    ));
-  };
-
-  const deleteTask = (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      setTasks(tasks.filter(task => task.id !== taskId));
+  // fetch tasks from Supabase
+  useEffect(() => {
+    async function fetchTasks() {
+      const { data, error } = await supabase.from('tasks').select('*');
+      if (error) {
+        console.error('Error fetching tasks:', error.message);
+      } else {
+        setTasks(data);
+      }
+      setLoading(false);
     }
-  };
 
-  const changeFilter = (newFilter) => {
-    setFilter(newFilter);
-  };
-
-  const getFilteredTasks = () => {
-    switch (filter) {
-      case 'active':
-        return tasks.filter(task => !task.completed);
-      case 'completed':
-        return tasks.filter(task => task.completed);
-      default:
-        return tasks;
-    }
-  };
-
-  const filteredTasks = getFilteredTasks();
-
-  const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(task => task.completed).length;
-  const remainingTasks = tasks.filter(task => !task.completed).length;
+    fetchTasks();
+  }, []);
 
   return (
-    <div className="App">
-      <div className="App-header">
-        <h1>My To-Do List</h1>
-      </div>
-      <div className="todo-container">
-        <AddTaskForm onAddTask={addTask} />
-        <TaskFilter 
-          currentFilter={filter}
-          onFilterChange={changeFilter}
-        />
+    <div style={{ padding: '2rem' }}>
+      <h1>My To-Do List</h1>
 
-        <div className="task-stats">
-          Total: {totalTasks} | Completed: {completedTasks} | Remaining: {remainingTasks}
-        </div>
-
-        <TaskList 
-          tasks={filteredTasks} 
-          onToggleTask={toggleTask}
-          onDeleteTask={deleteTask}
-        />
-      </div>
+      {loading ? (
+        <p>Loading tasks...</p>
+      ) : tasks.length === 0 ? (
+        <p>No tasks yet!</p>
+      ) : (
+        <ul>
+          {tasks.map((task) => (
+            <li key={task.id}>
+              {task.text} {task.completed ? '✅' : ''}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
