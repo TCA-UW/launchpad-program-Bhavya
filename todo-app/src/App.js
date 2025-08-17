@@ -1,48 +1,84 @@
-import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-// initialize Supabase client
-const supabase = createClient(
-  import.meta.env.REACT_APP_SUPABASE_URL,
-  import.meta.env.REACT_APP_SUPABASE_ANON_KEY
-);
+import React, { useState, useEffect } from 'react';
+import AddTaskForm from './Components/AddTaskForm';
+import TaskList from './Components/TaskList';
+import TaskFilter from './Components/TaskFilter';
+import './App.css';
 
 function App() {
   const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
 
-  // fetch tasks from Supabase
   useEffect(() => {
     async function fetchTasks() {
-      const { data, error } = await supabase.from('tasks').select('*');
-      if (error) {
-        console.error('Error fetching tasks:', error.message);
-      } else {
-        setTasks(data);
-      }
-      setLoading(false);
+      const res = await fetch('http://localhost:3001/tasks');
+      const data = await res.json();
+      setTasks(data);
     }
 
     fetchTasks();
   }, []);
 
-  return (
-    <div style={{ padding: '2rem' }}>
-      <h1>My To-Do List</h1>
+  const addTask = (newTask) => {
+    setTasks([...tasks, newTask]);
+  };
 
-      {loading ? (
-        <p>Loading tasks...</p>
-      ) : tasks.length === 0 ? (
-        <p>No tasks yet!</p>
-      ) : (
-        <ul>
-          {tasks.map((task) => (
-            <li key={task.id}>
-              {task.text} {task.completed ? '✅' : ''}
-            </li>
-          ))}
-        </ul>
-      )}
+  const toggleTask = (taskId) => {
+    setTasks(tasks.map(task => 
+      task.id === taskId 
+        ? { ...task, completed: !task.completed }
+        : task
+    ));
+  };
+
+  const deleteTask = (taskId) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      setTasks(tasks.filter(task => task.id !== taskId));
+    }
+  };
+
+  const changeFilter = (newFilter) => {
+    setFilter(newFilter);
+  };
+
+  const getFilteredTasks = () => {
+    switch (filter) {
+      case 'active':
+        return tasks.filter(task => !task.completed);
+      case 'completed':
+        return tasks.filter(task => task.completed);
+      default:
+        return tasks;
+    }
+  };
+
+  const filteredTasks = getFilteredTasks();
+
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(task => task.completed).length;
+  const remainingTasks = tasks.filter(task => !task.completed).length;
+
+  return (
+    <div className="App">
+      <div className="App-header">
+        <h1>My To-Do List</h1>
+      </div>
+      <div className="todo-container">
+        <AddTaskForm onAddTask={addTask} />
+        <TaskFilter 
+          currentFilter={filter}
+          onFilterChange={changeFilter}
+        />
+
+        <div className="task-stats">
+          Total: {totalTasks} | Completed: {completedTasks} | Remaining: {remainingTasks}
+        </div>
+
+        <TaskList 
+          tasks={filteredTasks} 
+          onToggleTask={toggleTask}
+          onDeleteTask={deleteTask}
+        />
+      </div>
     </div>
   );
 }
