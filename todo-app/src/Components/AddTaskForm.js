@@ -4,21 +4,12 @@ function AddTaskForm({ onAddTask }) {
   const [task, setTask] = useState('');
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (task.trim()) {
-      
-      const newTask = {
-        id: Date.now(),
-        text: task.trim(),
-        completed: false
-      };
-      
-      onAddTask(newTask);
-      
-      setTask('');
-    }
-  };
+  e.preventDefault();
+  if (task.trim()) {
+    onAddTask(task.trim()); // Pass just the text, not a full object
+    setTask('');
+  }
+};
 
   return (
     <div className="add-task-form">
